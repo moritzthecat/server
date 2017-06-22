@@ -20,6 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  *
  */
+
 namespace OCA\DAV\Upload;
 
 use Sabre\DAV\IFile;
@@ -66,7 +67,7 @@ class AssemblyStream implements \Icewind\Streams\File {
 		// sort the nodes
 		$nodes = $this->nodes;
 		// http://stackoverflow.com/a/10985500
-		@usort($nodes, function(IFile $a, IFile $b) {
+		@usort($nodes, function (IFile $a, IFile $b) {
 			return strnatcmp($a->getName(), $b->getName());
 		});
 		$this->nodes = $nodes;
@@ -74,7 +75,7 @@ class AssemblyStream implements \Icewind\Streams\File {
 		// build additional information
 		$this->sortedNodes = [];
 		$start = 0;
-		foreach($this->nodes as $node) {
+		foreach ($this->nodes as $node) {
 			$size = $node->getSize();
 			$name = $node->getName();
 			$this->sortedNodes[$name] = ['node' => $node, 'start' => $start, 'end' => $start + $size];
@@ -113,7 +114,9 @@ class AssemblyStream implements \Icewind\Streams\File {
 					return '';
 				}
 				$this->currentStream = $this->getStream($node);
-				fseek($this->currentStream, $posInNode);
+				if ($posInNode > 0) {
+					$this->seekStream($this->currentStream, $posInNode);
+				}
 			}
 
 			$data = fread($this->currentStream, $count);
@@ -253,7 +256,7 @@ class AssemblyStream implements \Icewind\Streams\File {
 	 * @return IFile | null
 	 */
 	private function getNodeForPosition($pos) {
-		foreach($this->sortedNodes as $node) {
+		foreach ($this->sortedNodes as $node) {
 			if ($pos >= $node['start'] && $pos < $node['end']) {
 				return [$node['node'], $pos - $node['start']];
 			}
@@ -269,9 +272,24 @@ class AssemblyStream implements \Icewind\Streams\File {
 		$data = $node->get();
 		if (is_resource($data)) {
 			return $data;
+		} else {
+			$tmp = fopen('php://temp', 'w+');
+			fwrite($tmp, $data);
+			rewind($tmp);
+			return $tmp;
 		}
+	}
 
-		return fopen('data://text/plain,' . $data,'r');
+	private function seekStream($handle, $position) {
+		if (stream_get_meta_data($handle)['seekable']) {
+			fseek($this->currentStream, $position);
+		} else {
+			$offset = $position - $this->stream_tell($handle);
+			if ($offset < 0) {
+				throw new \InvalidArgumentException('Can\'t rewind stream');
+			}
+			fread($handle, $offset);
+		}
 	}
 
 }

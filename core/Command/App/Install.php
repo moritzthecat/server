@@ -23,7 +23,6 @@
 namespace OC\Core\Command\App;
 
 use OC\Installer;
-use Stecman\Component\Symfony\Console\BashCompletion\Completion\CompletionAwareInterface;
 use Stecman\Component\Symfony\Console\BashCompletion\CompletionContext;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
@@ -31,7 +30,7 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
-class Install extends Command implements CompletionAwareInterface {
+class Install extends Command {
 
 	public function __construct() {
 		parent::__construct();
@@ -80,27 +79,5 @@ class Install extends Command implements CompletionAwareInterface {
 		$output->writeln($appId . ' installed');
 
 		return 0;
-	}
-
-	/**
-	 * @param string $optionName
-	 * @param CompletionContext $context
-	 * @return string[]
-	 */
-	public function completeOptionValues($optionName, CompletionContext $context) {
-		return [];
-	}
-
-	/**
-	 * @param string $argumentName
-	 * @param CompletionContext $context
-	 * @return string[]
-	 */
-	public function completeArgumentValues($argumentName, CompletionContext $context) {
-		if ($argumentName === 'app-id') {
-			$allApps = \OC_App::getAllApps();
-			return array_diff($allApps, \OC_App::getEnabledApps(true, true));
-		}
-		return [];
 	}
 }

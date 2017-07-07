@@ -67,7 +67,7 @@ class Install extends Command {
 			$installer->downloadApp($appId);
 			$result = $installer->installApp($appId);
 		} catch(Exception $e) {
-			$output->writeln('Error: ' . $ex->getMessage());
+			$output->writeln('Error: ' . $e->getMessage());
 			return 1;
 		}
 
